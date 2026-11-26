@@ -1,0 +1,15 @@
+# macOS and editor files
+.DS_Store
+.AppleDouble
+._*
+.idea/
+.vscode/
+*.swp
+
+# Local tools and test output
+node_modules/
+playwright-report/
+test-results/
+coverage/
+graphify-out/
+.impeccable/
