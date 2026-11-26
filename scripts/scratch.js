@@ -1,7 +1,6 @@
 /** @typedef {{ x: number, y: number }} Point */
 
-const revealThreshold = 0.42;
-const keyboardRows = [0.2, 0.5, 0.8];
+const keyboardRows = [0.08, 0.29, 0.5, 0.71, 0.92];
 const columns = 48;
 const rows = 30;
 
@@ -13,8 +12,9 @@ export class ScratchCoverage {
 
   /** @param {number} width @param {number} height */
   constructor(width, height) {
-    this.#cellWidth = width / columns;
-    this.#cellHeight = height / rows;
+    // Include the outer edges when sampling the whole card for coverage.
+    this.#cellWidth = width / (columns - 1);
+    this.#cellHeight = height / (rows - 1);
   }
 
   /**
@@ -35,8 +35,8 @@ export class ScratchCoverage {
       for (let column = firstColumn; column <= lastColumn; column++) {
         const index = row * columns + column;
         if (this.#cells[index]) continue;
-        const x = (column + 0.5) * this.#cellWidth - from.x;
-        const y = (row + 0.5) * this.#cellHeight - from.y;
+        const x = column * this.#cellWidth - from.x;
+        const y = row * this.#cellHeight - from.y;
         const projection = lengthSquared === 0 ? 0 : Math.max(0, Math.min(1, (x * dx + y * dy) / lengthSquared));
         if ((x - projection * dx) ** 2 + (y - projection * dy) ** 2 <= radius ** 2) {
           this.#cells[index] = 1;
@@ -78,6 +78,9 @@ function paintFoil(context, width, height) {
   context.fillStyle = "#593228";
   context.fillText("Hier rubbeln", width / 2, height / 2);
   context.globalCompositeOperation = "destination-out";
+  // Opaque strokes erase the gold in one pass, including its printed border.
+  context.strokeStyle = "#000";
+  context.fillStyle = "#000";
 }
 
 /** @param {HTMLCanvasElement} canvas @param {() => void} reveal */
@@ -107,7 +110,7 @@ export function createScratchCard(canvas, reveal) {
         context.stroke();
       }
     }
-    if (coverage.markStroke(start, end, radius) >= revealThreshold) {
+    if (coverage.markStroke(start, end, radius) === 1) {
       stop();
       reveal();
     }
@@ -153,7 +156,7 @@ export function createScratchCard(canvas, reveal) {
       stop();
       const y = height * keyboardRows[keyboardRow];
       keyboardRow = (keyboardRow + 1) % keyboardRows.length;
-      rub({ x: width * 0.05, y }, { x: width * 0.95, y });
+      rub({ x: 0, y }, { x: width, y });
     },
     reset() {
       stop();

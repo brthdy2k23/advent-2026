@@ -15,8 +15,9 @@ einen außenliegenden Rahmen und die Aufschrift „Heute“.
 
 Die Goldfläche ist die primäre Aktion im Dialog. Maus- und Touchbewegungen
 tragen sie sichtbar ab. Per Tastatur rubbeln Leer- oder Eingabetaste jeweils
-einen Streifen frei. Die Nachricht steht auf Papier neben dem Foto oder
-einer gezeichneten Sternkarte. Auf dem Handy folgt das Bild unter dem Text.
+einen Streifen frei. Sobald die ganze Fläche frei ist, erscheint die Nachricht
+neben dem Foto oder dem Motiv des geöffneten Türchens. Auf dem Handy folgt
+das Bild unter dem Text.
 
 ## Grafiken und Schriften
 

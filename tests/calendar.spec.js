@@ -11,9 +11,19 @@ async function gotoDay(page, day) {
 
 async function rubWithKeyboard(page) {
   await rubSurface(page).focus();
-  for (let step = 0; step < 4 && await rubSurface(page).isVisible(); step++) {
+  for (let step = 0; step < 6 && await rubSurface(page).isVisible(); step++) {
     await page.keyboard.press("Enter");
   }
+}
+
+async function useDoorFixtures(page, overrides = []) {
+  const doors = Array.from({ length: 24 }, (_, index) => ({
+    day: index + 1, title: "", text: "", image: "", alt: "", ...overrides[index],
+  }));
+  await page.route("**/calendar-data.js", (route) => route.fulfill({
+    contentType: "text/javascript",
+    body: `export const doors = ${JSON.stringify(doors)};`,
+  }));
 }
 
 test("loads from a GitHub Pages-style subpath with its local assets", async ({ page, request }) => {
@@ -42,17 +52,27 @@ test("keeps future days locked and saves a door opened by real mouse movement", 
   const box = await scratch.boundingBox();
   const x = (fraction) => box.x + box.width * fraction;
   const y = (fraction) => box.y + box.height * fraction;
-  await page.mouse.move(x(0.06), y(0.14));
+  await expect(rubSurface(page).locator(".spark")).toHaveCount(0);
+  const drawRow = async (row) => {
+    await page.mouse.move(x(0.015), y(row));
+    await page.mouse.move(x(0.985), y(row), { steps: 12 });
+  };
+  await page.mouse.move(x(0.015), y(0.02));
   await page.mouse.down();
-  await page.mouse.move(x(0.94), y(0.14), { steps: 12 });
+  await drawRow(0.02);
+
+  const sampleAlpha = await scratch.evaluate((canvas) => (
+    canvas.getContext("2d").getImageData(canvas.width / 2, 8, 1, 1).data[3]
+  ));
+  expect(sampleAlpha).toBe(0);
+  for (const row of [0.22, 0.42, 0.62, 0.82]) await drawRow(row);
   await expect(scratch).toBeVisible();
-  for (const row of [0.34, 0.54, 0.74, 0.9]) {
-    await page.mouse.move(x(0.94), y(row));
-    await page.mouse.move(x(0.06), y(row), { steps: 12 });
-    if (!(await scratch.isVisible())) break;
-  }
+  await expect(page.locator("#letter-stage")).toBeHidden();
+  await drawRow(0.98);
+  const letterDate = page.getByText("6. Dezember 2026", { exact: true });
+  await expect(letterDate).toBeVisible();
   await page.mouse.up();
-  await expect(page.getByText("6. Dezember 2026", { exact: true })).toBeVisible();
+  await expect(letterDate).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(door(page, 6)).toBeFocused();
 
@@ -69,10 +89,21 @@ test("rubs the surface in steps by keyboard and returns focus", async ({ page })
   await expect(rubSurface(page)).toBeFocused();
   await expect(page.getByRole("button", { name: "Ohne Rubbeln öffnen" })).toHaveCount(0);
   await page.keyboard.press("Space");
+  for (let step = 0; step < 3; step++) await page.keyboard.press("Enter");
   await expect(rubSurface(page)).toBeVisible();
-  await rubWithKeyboard(page);
+  await page.keyboard.press("Enter");
   await expect(page.locator("#letter-title")).toBeFocused();
   await page.keyboard.press("Escape");
+  await expect(door(page, 1)).toBeFocused();
+});
+
+test("a press and release on the backdrop dismisses the dialog", async ({ page }) => {
+  await gotoDay(page, 1);
+  await door(page, 1).click();
+  const dialog = page.getByRole("dialog");
+  const box = await dialog.boundingBox();
+  await page.mouse.click(box.x / 2, box.y + box.height / 2);
+  await expect(dialog).toHaveCount(0);
   await expect(door(page, 1)).toBeFocused();
 });
 
@@ -85,17 +116,10 @@ test("uses a real Berlin date independent of the visitor's browser timezone", as
 });
 
 test("renders optional photos and falls back when an image fails", async ({ page }) => {
-  await page.route("**/calendar-data.js", async (route) => {
-    await route.fulfill({
-      contentType: "text/javascript",
-      body: `export const doors = Array.from({ length: 24 }, (_, index) => ({
-          day: index + 1, title: "", text: "", image: "", alt: "",
-        }));
-        Object.assign(doors[0], { title: "Ein Foto", text: "Erster Absatz.\\n\\nZweiter Absatz.",
-          image: "assets/tannenzweig.webp", alt: "Ein Tannenzweig" });
-        Object.assign(doors[1], { image: "assets/fotos/fehlt.webp", alt: "Fehlend" });`,
-    });
-  });
+  await useDoorFixtures(page, [
+    { title: "Ein Foto", text: "Erster Absatz.\n\nZweiter Absatz.", image: "assets/tannenzweig.webp", alt: "Ein Tannenzweig" },
+    { image: "assets/fotos/fehlt.webp", alt: "Fehlend" },
+  ]);
   await gotoDay(page, 2);
   await door(page, 1).click();
   await rubWithKeyboard(page);
@@ -107,6 +131,26 @@ test("renders optional photos and falls back when an image fails", async ({ page
   await rubWithKeyboard(page);
   await expect(page.locator(".letter__placeholder")).toBeVisible();
   await expect(page.getByRole("img", { name: "Fehlend" })).toHaveCount(0);
+});
+
+test("a photo-free letter uses its own door's motif and palette", async ({ page }) => {
+  await useDoorFixtures(page);
+  await gotoDay(page, 2);
+  const placeholder = page.locator(".letter__placeholder");
+  for (const [day, motif, color] of [
+    [1, "star", "rgb(112, 56, 74)"],
+    [2, "bauble", "rgb(240, 227, 202)"],
+  ]) {
+    const tile = door(page, day);
+    await expect(tile.locator(".ornament")).toHaveAttribute("data-ornament", motif);
+    await tile.click();
+    await rubWithKeyboard(page);
+    await expect(placeholder).toBeVisible();
+    await expect(placeholder.locator(".ornament")).toHaveAttribute("data-ornament", motif);
+    await expect(placeholder).toHaveCSS("background-color", color);
+    await expect(page.getByRole("dialog").getByRole("img")).toHaveCount(0);
+    await page.keyboard.press("Escape");
+  }
 });
 
 test("has no automated accessibility violations in the calendar and both dialog states", async ({ page }) => {
@@ -135,10 +179,10 @@ test.describe("touch and mobile layout", () => {
     const box = await scratch.boundingBox();
     const client = await context.newCDPSession(page);
     const point = (x, y) => [{ x: box.x + box.width * x, y: box.y + box.height * y }];
-    await client.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: point(0.05, 0.16) });
-    for (const row of [0.16, 0.35, 0.54, 0.73, 0.9]) {
-      await client.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: point(0.05, row) });
-      await client.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: point(0.95, row) });
+    await client.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: point(0.02, 0.02) });
+    for (const row of [0.02, 0.22, 0.42, 0.62, 0.82, 0.98]) {
+      await client.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: point(0.02, row) });
+      await client.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: point(0.98, row) });
       if (!(await scratch.isVisible())) break;
     }
     await client.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });

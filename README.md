@@ -16,7 +16,7 @@ gibt es eine Überschrift, einen Text sowie optional ein Foto.
 ```
 
 Kopiere Fotos nach [`assets/fotos/`](assets/fotos/) und setze den jeweiligen
-Dateipfad. Bei leerem Bildpfad erscheint eine Sternkarte. Den Titel auf der
+Dateipfad. Bei leerem Bildpfad erscheint das Motiv des jeweiligen Türchens. Den Titel auf der
 Startseite findest du in [`index.html`](index.html).
 
 ## Lokal öffnen

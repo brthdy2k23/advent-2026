@@ -13,9 +13,10 @@ test("one mark is partial and tracing the same stroke cannot complete the reveal
 
 test("separate strokes across the card accumulate even when events are far apart", () => {
   const coverage = new ScratchCoverage(400, 240);
-  assert.ok(coverage.markStroke({ x: 0, y: 42 }, { x: 400, y: 42 }, 24) < 0.42);
-  assert.ok(coverage.markStroke({ x: 0, y: 120 }, { x: 400, y: 120 }, 24) < 0.42);
-  assert.ok(coverage.markStroke({ x: 0, y: 196 }, { x: 400, y: 196 }, 24) > 0.42);
+  for (const y of [20, 70, 120, 170]) {
+    assert.ok(coverage.markStroke({ x: 0, y }, { x: 400, y }, 26) < 1);
+  }
+  assert.equal(coverage.markStroke({ x: 0, y: 220 }, { x: 400, y: 220 }, 26), 1);
 });
 
 test("marking a point works at the edge even if pointer capture delivers coordinates outside", () => {

@@ -23,6 +23,7 @@ const letterTitle = /** @type {HTMLElement} */ (document.querySelector("#letter-
 const letterDate = document.querySelector("#letter-date");
 const letterBody = document.querySelector("#letter-body");
 const letterMedia = document.querySelector("#letter-media");
+const letterPlaceholder = /** @type {HTMLElement} */ (letterMedia.querySelector(".letter__placeholder"));
 const canvas = /** @type {HTMLCanvasElement} */ (document.querySelector("#scratch-canvas"));
 const scratchCard = createScratchCard(canvas, revealDoor);
 
@@ -47,12 +48,18 @@ const ornaments = [
 
 const stateLabel = { locked: "Noch geschlossen", ready: "Zum Freirubbeln", opened: "Geöffnet" };
 
-const tiles = doors.map((door, index) => {
+/** @param {HTMLElement} surface @param {number} day */
+function decorateDoor(surface, day) {
+  const ornament = /** @type {HTMLElement} */ (surface.querySelector(".ornament"));
+  surface.dataset.theme = themes[day - 1];
+  ornament.dataset.ornament = ornaments[day - 1];
+}
+
+const tiles = doors.map((door) => {
   const tile = /** @type {HTMLLIElement} */ (template.content.firstElementChild.cloneNode(true));
   const button = tile.querySelector("button");
   const today = /** @type {HTMLElement} */ (tile.querySelector(".door__today"));
-  button.dataset.theme = themes[index];
-  button.dataset.ornament = ornaments[index];
+  decorateDoor(button, door.day);
   const description = tile.querySelector(".door__description");
   description.id = `door-description-${door.day}`;
   button.setAttribute("aria-describedby", description.id);
@@ -141,6 +148,7 @@ function renderLetter(door) {
     letterBody.append(line);
   }
 
+  decorateDoor(letterPlaceholder, door.day);
   letterMedia.querySelector("img")?.remove();
   const path = door.image.trim();
   if (path) {
@@ -160,10 +168,18 @@ scratchSurface.addEventListener("click", (event) => {
   if (event.detail === 0 && !scratchStage.hidden) scratchCard.rubStep();
 });
 document.querySelector("#dialog-close").addEventListener("click", () => dialog.close());
-dialog.addEventListener("click", (event) => {
-  if (event.target === dialog) dialog.close();
+/** @type {number | null} */
+let backdropPointer = null;
+dialog.addEventListener("pointerdown", (event) => {
+  backdropPointer = event.button === 0 && event.target === dialog ? event.pointerId : null;
+});
+dialog.addEventListener("pointerup", (event) => {
+  // The final scratch can hide the canvas before the original gesture ends.
+  if (event.target === dialog && backdropPointer === event.pointerId) dialog.close();
+  backdropPointer = null;
 });
 dialog.addEventListener("close", () => {
+  backdropPointer = null;
   scratchCard.stop();
   activeDoor = null;
   trigger?.focus();

@@ -233,12 +233,12 @@ h1, h2, p { margin: 0; }
   text-align: start;
 }
 
-.door[data-theme="wine"] { --door-surface: #70384a; --door-edge: #70384a; --door-ink: #fae9cc; --ornament: #e9bc9b; }
-.door[data-theme="cream"] { --door-surface: #f0e3ca; --door-edge: #ded0b6; --door-ink: #5d4636; --ornament: #987143; }
-.door[data-theme="teal"] { --door-surface: #24585a; --door-edge: #24585a; --door-ink: #f9eed6; --ornament: #a7c3ad; }
-.door[data-theme="pink"] { --door-surface: #efd9d4; --door-edge: #e0c5bf; --door-ink: #673445; --ornament: #ac687d; }
-.door[data-theme="sand"] { --door-surface: #e7d4b2; --door-edge: #d9c3a2; --door-ink: #553a29; --ornament: #926743; }
-.door[data-theme="pine"] { --door-surface: #405446; --door-edge: #405446; --door-ink: #f7e9d2; --ornament: #c0c7aa; }
+:is(.door, .letter__placeholder)[data-theme="wine"] { --door-surface: #70384a; --door-edge: #70384a; --door-ink: #fae9cc; --ornament: #e9bc9b; }
+:is(.door, .letter__placeholder)[data-theme="cream"] { --door-surface: #f0e3ca; --door-edge: #ded0b6; --door-ink: #5d4636; --ornament: #987143; }
+:is(.door, .letter__placeholder)[data-theme="teal"] { --door-surface: #24585a; --door-edge: #24585a; --door-ink: #f9eed6; --ornament: #a7c3ad; }
+:is(.door, .letter__placeholder)[data-theme="pink"] { --door-surface: #efd9d4; --door-edge: #e0c5bf; --door-ink: #673445; --ornament: #ac687d; }
+:is(.door, .letter__placeholder)[data-theme="sand"] { --door-surface: #e7d4b2; --door-edge: #d9c3a2; --door-ink: #553a29; --ornament: #926743; }
+:is(.door, .letter__placeholder)[data-theme="pine"] { --door-surface: #405446; --door-edge: #405446; --door-ink: #f7e9d2; --ornament: #c0c7aa; }
 
 .door::after {
   position: absolute;
@@ -328,37 +328,40 @@ h1, h2, p { margin: 0; }
   translate: 0 -0.11rem;
 }
 
-/* Geometric print ornaments share an anchor and scale. */
-.door__ornament {
+/* The same geometric print ornaments appear on the doors and in the letters. */
+.ornament {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  color: var(--ornament);
+  pointer-events: none;
+}
+
+.door .ornament {
   position: absolute;
   z-index: -1;
   right: 11%;
   bottom: 15%;
-  display: grid;
-  place-items: center;
   width: 48%;
   max-width: 4.7rem;
-  aspect-ratio: 1;
-  color: var(--ornament);
   opacity: 0.7;
-  pointer-events: none;
 }
 
-.door__ornament::before,
-.door__ornament::after,
-.door__ornament > span {
+.ornament::before,
+.ornament::after,
+.ornament > span {
   grid-area: 1 / 1;
   content: "";
 }
 
-[data-ornament="star"] .door__ornament::before {
+.ornament[data-ornament="star"]::before {
   width: 90%;
   aspect-ratio: 1;
   background: currentColor;
   clip-path: var(--star-shape);
 }
 
-[data-ornament="star"] .door__ornament::after {
+.ornament[data-ornament="star"]::after {
   width: 12%;
   aspect-ratio: 1;
   border: 1px solid currentColor;
@@ -366,7 +369,7 @@ h1, h2, p { margin: 0; }
   translate: 240% -240%;
 }
 
-[data-ornament="bauble"] .door__ornament::before {
+.ornament[data-ornament="bauble"]::before {
   width: 66%;
   aspect-ratio: 1;
   border: 1px solid currentColor;
@@ -375,7 +378,7 @@ h1, h2, p { margin: 0; }
   translate: 0 9%;
 }
 
-[data-ornament="bauble"] .door__ornament::after {
+.ornament[data-ornament="bauble"]::after {
   width: 17%;
   aspect-ratio: 1.4;
   border: 1px solid currentColor;
@@ -383,16 +386,16 @@ h1, h2, p { margin: 0; }
   translate: 0 -275%;
 }
 
-[data-ornament="bauble"] .door__ornament > span {
+.ornament[data-ornament="bauble"] > span {
   width: 1px;
   height: 16%;
   background: currentColor;
   translate: 0 -265%;
 }
 
-[data-ornament="snow"] .door__ornament::before,
-[data-ornament="snow"] .door__ornament::after,
-[data-ornament="snow"] .door__ornament > span {
+.ornament[data-ornament="snow"]::before,
+.ornament[data-ornament="snow"]::after,
+.ornament[data-ornament="snow"] > span {
   --branch-up: linear-gradient(45deg, transparent 46%, currentColor 47% 53%, transparent 54%);
   --branch-down: linear-gradient(-45deg, transparent 46%, currentColor 47% 53%, transparent 54%);
   width: 84%;
@@ -405,26 +408,26 @@ h1, h2, p { margin: 0; }
     var(--branch-down) 85% bottom / 17% 50% no-repeat;
 }
 
-[data-ornament="snow"] .door__ornament::after { rotate: 60deg; }
-[data-ornament="snow"] .door__ornament > span { rotate: -60deg; }
+.ornament[data-ornament="snow"]::after { rotate: 60deg; }
+.ornament[data-ornament="snow"] > span { rotate: -60deg; }
 
-[data-ornament="fir"] .door__ornament::before {
+.ornament[data-ornament="fir"]::before {
   width: 72%;
   aspect-ratio: 0.84;
   background: currentColor;
   clip-path: polygon(50% 0, 76% 34%, 66% 34%, 89% 63%, 74% 63%, 100% 91%, 55% 91%, 55% 100%, 45% 100%, 45% 91%, 0 91%, 26% 63%, 11% 63%, 34% 34%, 24% 34%);
 }
 
-[data-ornament="fir"] .door__ornament::after {
+.ornament[data-ornament="fir"]::after {
   width: 1px;
   height: 81%;
   background: var(--door-surface);
   translate: 0 6%;
 }
 
-[data-ornament="arc"] .door__ornament::before,
-[data-ornament="arc"] .door__ornament::after,
-[data-ornament="arc"] .door__ornament > span {
+.ornament[data-ornament="arc"]::before,
+.ornament[data-ornament="arc"]::after,
+.ornament[data-ornament="arc"] > span {
   align-self: end;
   width: 96%;
   height: 70%;
@@ -433,11 +436,11 @@ h1, h2, p { margin: 0; }
   rotate: -14deg;
 }
 
-[data-ornament="arc"] .door__ornament::after { width: 74%; height: 59%; }
-[data-ornament="arc"] .door__ornament > span { width: 48%; height: 48%; }
+.ornament[data-ornament="arc"]::after { width: 74%; height: 59%; }
+.ornament[data-ornament="arc"] > span { width: 48%; height: 48%; }
 
-[data-ornament="bow"] .door__ornament::before,
-[data-ornament="bow"] .door__ornament::after {
+.ornament[data-ornament="bow"]::before,
+.ornament[data-ornament="bow"]::after {
   width: 42%;
   height: 28%;
   border: 1px solid currentColor;
@@ -446,13 +449,13 @@ h1, h2, p { margin: 0; }
   translate: -43% -20%;
 }
 
-[data-ornament="bow"] .door__ornament::after {
+.ornament[data-ornament="bow"]::after {
   scale: -1 1;
   rotate: -20deg;
   translate: 43% -20%;
 }
 
-[data-ornament="bow"] .door__ornament > span {
+.ornament[data-ornament="bow"] > span {
   width: 33%;
   height: 34%;
   border-inline: 1px solid currentColor;
@@ -516,10 +519,7 @@ h1, h2, p { margin: 0; }
   border-radius: 0.3rem;
   cursor: crosshair;
   background: var(--wine);
-  color: var(--gold);
 }
-
-.scratch__spark { width: min(29%, 6.5rem); }
 
 .scratch canvas {
   position: absolute;
@@ -560,26 +560,21 @@ h1, h2, p { margin: 0; }
   place-items: center;
   aspect-ratio: 0.86;
   overflow: hidden;
-  background: #eedfc6;
-  color: #8b6241;
+  background: var(--door-surface);
+  color: var(--door-ink);
 }
 
-.letter__placeholder::before,
-.letter__placeholder::after {
+.letter__placeholder::before {
   position: absolute;
   inset: 0.6rem;
-  border: 1px solid #a27b5290;
+  border: 1px solid currentColor;
+  border-radius: 0.15rem;
+  opacity: 0.22;
+  pointer-events: none;
   content: "";
 }
 
-.letter__placeholder::after {
-  inset: auto;
-  width: 69%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-}
-
-.letter__spark { width: 51%; }
+.letter__placeholder .ornament { width: min(54%, 8rem); }
 
 @media (max-width: 55rem) {
   .cover__art { width: 47%; }
@@ -621,8 +616,7 @@ h1, h2, p { margin: 0; }
   .letter { grid-template-columns: minmax(0, 1fr); }
   .letter__copy { padding-inline-end: 0.75rem; }
   .letter__placeholder { aspect-ratio: 1.9; }
-  .letter__placeholder::after { width: auto; height: 72%; }
-  .letter__spark { width: 25%; }
+  .letter__placeholder .ornament { width: 36%; }
 }
 
 @media (max-width: 23rem) {
