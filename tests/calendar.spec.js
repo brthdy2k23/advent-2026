@@ -211,20 +211,19 @@ test("unlocks the highlighted door at 08:00 Berlin time with the page open", asy
   await expect(door(page, 8)).toBeDisabled();
 });
 
-test("the local test link unlocks every door and stores openings separately", async ({ page }) => {
-  await page.clock.setFixedTime(new Date("2026-11-26T12:00:00Z"));
-  await page.goto("?test=6");
-  await expect(page.getByRole("list").locator("button:enabled")).toHaveCount(24);
+test("a former test URL cannot unlock doors ahead of Berlin time", async ({ page }) => {
+  await page.clock.setFixedTime(new Date("2026-12-06T06:59:59Z"));
+  await page.goto("?test=24");
   await expect(door(page, 6)).toHaveAttribute("aria-current", "date");
-  await expect(page.getByText(/Vorschau|Testmodus/)).toHaveCount(0);
-  await door(page, 24).click();
-  await rubWithKeyboard(page);
-  await expect(page.getByText("24. Dezember 2026", { exact: true })).toBeVisible();
+  await expect(door(page, 6)).toBeDisabled();
+  await expect(page.getByRole("list").locator("button:enabled")).toHaveCount(5);
 
-  await page.clock.setFixedTime(new Date("2026-12-24T07:00:00Z"));
-  await page.goto("./");
-  await door(page, 24).click();
-  await expect(rubSurface(page)).toBeVisible();
+  await page.clock.setFixedTime(new Date("2026-12-06T07:00:00Z"));
+  await page.reload();
+  await expect(door(page, 6)).toBeEnabled();
+  await expect(door(page, 7)).toBeDisabled();
+  await expect(door(page, 24)).toBeDisabled();
+  await expect(page.getByRole("list").locator("button:enabled")).toHaveCount(6);
 });
 
 test("fits the entire rub surface into a shallow landscape dialog", async ({ page }) => {

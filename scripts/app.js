@@ -1,9 +1,8 @@
 import { doors } from "../calendar-data.js";
-import { calendarDate, doorState, localTestDate, readOpened, rememberDoor } from "./calendar.js";
+import { calendarDate, doorState, readOpened, rememberDoor } from "./calendar.js";
 import { createScratchCard } from "./scratch.js";
 
-const testDate = localTestDate(new URL(location.href));
-const storageKey = testDate ? "advent-2026:test-opened" : "advent-2026:opened";
+const storageKey = "advent-2026:opened";
 const storage = {
   /** @param {string} key */
   getItem: (key) => localStorage.getItem(key),
@@ -69,14 +68,10 @@ const tiles = doors.map((door) => {
   return { door, button, today, description };
 });
 
-function currentDate() {
-  return testDate ?? calendarDate(new Date());
-}
-
-let displayedDate = currentDate();
+let displayedDate = calendarDate(new Date());
 
 /** @param {import("./calendar.js").CalendarDate} date */
-function refreshCalendar(date = currentDate()) {
+function refreshCalendar(date = calendarDate(new Date())) {
   displayedDate = date;
   if (date.available === 0) {
     status.textContent = "Das erste Türchen öffnet am 1. Dezember um 8 Uhr.";
@@ -99,7 +94,7 @@ function refreshCalendar(date = currentDate()) {
 
 /** @param {import("../calendar-data.js").Door} door @param {HTMLButtonElement} button */
 function openDoor(door, button) {
-  const state = doorState(door.day, currentDate(), opened);
+  const state = doorState(door.day, calendarDate(new Date()), opened);
   if (state === "locked") {
     refreshCalendar();
     return;
@@ -193,7 +188,7 @@ window.addEventListener("storage", (event) => {
 });
 
 function checkDate() {
-  const date = currentDate();
+  const date = calendarDate(new Date());
   if (date.available !== displayedDate.available || date.today !== displayedDate.today) {
     refreshCalendar(date);
   }
@@ -209,7 +204,5 @@ function scheduleDateCheck() {
 }
 
 refreshCalendar(displayedDate);
-if (!testDate) {
-  scheduleDateCheck();
-  document.addEventListener("visibilitychange", checkDate);
-}
+scheduleDateCheck();
+document.addEventListener("visibilitychange", checkDate);

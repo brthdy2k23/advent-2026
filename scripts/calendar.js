@@ -27,14 +27,6 @@ export function calendarDate(now) {
   return { today: parts.day, available };
 }
 
-/** @param {URL} url @returns {CalendarDate | null} */
-export function localTestDate(url) {
-  if (!["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)) return null;
-  const selectedDay = url.searchParams.get("test") ?? "";
-  if (!/^(?:[1-9]|1[0-9]|2[0-4])$/.test(selectedDay)) return null;
-  return { today: Number(selectedDay), available: daysInAdvent };
-}
-
 /** @param {number} day @param {CalendarDate} date @param {Set<number>} opened @returns {DoorState} */
 export function doorState(day, date, opened) {
   if (day > date.available) return "locked";

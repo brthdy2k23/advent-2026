@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { calendarDate, doorState, localTestDate, readOpened, rememberDoor } from "../scripts/calendar.js";
+import { calendarDate, doorState, readOpened, rememberDoor } from "../scripts/calendar.js";
 import { doors } from "../calendar-data.js";
 
 test("all 24 editable doors appear once in calendar order", () => {
@@ -21,19 +21,6 @@ test("unlocks a door exactly at 08:00 in Berlin, including the first and last da
   assert.deepEqual(calendarDate(new Date("2026-12-24T07:00:00Z")), { today: 24, available: 24 });
   assert.deepEqual(calendarDate(new Date("2026-12-24T23:00:00Z")), { today: null, available: 24 });
   assert.deepEqual(calendarDate(new Date("2027-12-10T12:00:00Z")), { today: null, available: 24 });
-});
-
-test("enables the test calendar only on loopback and highlights the chosen day", () => {
-  for (const host of ["localhost", "127.0.0.1", "[::1]"]) {
-    assert.deepEqual(localTestDate(new URL(`http://${host}:8000/?test=6`)), { today: 6, available: 24 });
-  }
-  for (const url of [
-    "https://example.github.io/advent-2026/?test=6",
-    "http://localhost/", "http://localhost/?test=0",
-    "http://localhost/?test=25", "http://localhost/?test=1.5",
-  ]) {
-    assert.equal(localTestDate(new URL(url)), null);
-  }
 });
 
 test("opens past days, highlights today, and keeps future content locked", () => {
