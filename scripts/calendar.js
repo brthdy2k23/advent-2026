@@ -1,10 +1,13 @@
 const calendarYear = 2026;
 const daysInAdvent = 24;
+const openingHour = 8;
 const berlinDate = new Intl.DateTimeFormat("en-CA", {
   timeZone: "Europe/Berlin",
   year: "numeric",
   month: "numeric",
   day: "numeric",
+  hour: "numeric",
+  hourCycle: "h23",
 });
 
 /** @typedef {{ today: number | null, available: number }} CalendarDate */
@@ -20,7 +23,16 @@ export function calendarDate(now) {
   if (parts.year > calendarYear || parts.day > daysInAdvent) {
     return { today: null, available: daysInAdvent };
   }
-  return { today: parts.day, available: parts.day };
+  const available = parts.hour >= openingHour ? parts.day : parts.day - 1;
+  return { today: parts.day, available };
+}
+
+/** @param {URL} url @returns {CalendarDate | null} */
+export function localTestDate(url) {
+  if (!["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)) return null;
+  const selectedDay = url.searchParams.get("test") ?? "";
+  if (!/^(?:[1-9]|1[0-9]|2[0-4])$/.test(selectedDay)) return null;
+  return { today: Number(selectedDay), available: daysInAdvent };
 }
 
 /** @param {number} day @param {CalendarDate} date @param {Set<number>} opened @returns {DoorState} */

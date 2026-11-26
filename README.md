@@ -1,7 +1,7 @@
 # Ein Advent für dich
 
 Ein statischer Adventskalender für Dezember 2026. Jeden Tag öffnet um
-Mitternacht in Berlin ein weiteres Türchen. Vergangene Türchen bleiben
+8 Uhr Berliner Zeit ein weiteres Türchen. Vergangene Türchen bleiben
 verfügbar. Der Browser merkt sich, welche Türchen bereits freigerubbelt
 wurden.
 
@@ -25,8 +25,10 @@ Startseite findest du in [`index.html`](index.html).
 python3 -m http.server 8000 --bind 127.0.0.1
 ```
 
-Öffne im Browser [`http://127.0.0.1:8000/`](http://127.0.0.1:8000/).
-Die automatisierten Browser-Tests simulieren Dezembertage.
+Öffne [alle Türchen zum Testen](http://127.0.0.1:8000/?test=6).
+Die Zahl hinter `test=` markiert ein Türchen als „Heute“. Der Testlink
+funktioniert auf dem lokalen Rechner, und Testöffnungen werden separat
+gespeichert. Die [normale Ansicht](http://127.0.0.1:8000/) nutzt das echte Datum.
 
 ## GitHub Pages
 

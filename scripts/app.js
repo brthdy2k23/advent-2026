@@ -1,8 +1,9 @@
 import { doors } from "../calendar-data.js";
-import { calendarDate, doorState, readOpened, rememberDoor } from "./calendar.js";
+import { calendarDate, doorState, localTestDate, readOpened, rememberDoor } from "./calendar.js";
 import { createScratchCard } from "./scratch.js";
 
-const storageKey = "advent-2026:opened";
+const testDate = localTestDate(new URL(location.href));
+const storageKey = testDate ? "advent-2026:test-opened" : "advent-2026:opened";
 const storage = {
   /** @param {string} key */
   getItem: (key) => localStorage.getItem(key),
@@ -61,12 +62,22 @@ const tiles = doors.map((door, index) => {
   return { door, button, today, description };
 });
 
-let displayedDate = { today: null, available: 0 };
+function currentDate() {
+  return testDate ?? calendarDate(new Date());
+}
+
+let displayedDate = currentDate();
 
 /** @param {import("./calendar.js").CalendarDate} date */
-function refreshCalendar(date = calendarDate(new Date())) {
+function refreshCalendar(date = currentDate()) {
   displayedDate = date;
-  status.textContent = date.available === 0 ? "Das erste Türchen öffnet am 1. Dezember." : "";
+  if (date.available === 0) {
+    status.textContent = "Das erste Türchen öffnet am 1. Dezember um 8 Uhr.";
+  } else if (date.today !== null && date.today > date.available) {
+    status.textContent = "Das heutige Türchen öffnet um 8 Uhr.";
+  } else {
+    status.textContent = "";
+  }
 
   for (const { door, button, today, description } of tiles) {
     const state = doorState(door.day, date, opened);
@@ -81,7 +92,7 @@ function refreshCalendar(date = calendarDate(new Date())) {
 
 /** @param {import("../calendar-data.js").Door} door @param {HTMLButtonElement} button */
 function openDoor(door, button) {
-  const state = doorState(door.day, calendarDate(new Date()), opened);
+  const state = doorState(door.day, currentDate(), opened);
   if (state === "locked") {
     refreshCalendar();
     return;
@@ -166,12 +177,23 @@ window.addEventListener("storage", (event) => {
 });
 
 function checkDate() {
-  const date = calendarDate(new Date());
+  const date = currentDate();
   if (date.available !== displayedDate.available || date.today !== displayedDate.today) {
     refreshCalendar(date);
   }
 }
 
-refreshCalendar();
-window.setInterval(checkDate, 15000);
-document.addEventListener("visibilitychange", checkDate);
+function scheduleDateCheck() {
+  const interval = 15000;
+  // Check on a clock boundary so an open page updates at 08:00 too.
+  window.setTimeout(() => {
+    checkDate();
+    scheduleDateCheck();
+  }, interval - Date.now() % interval);
+}
+
+refreshCalendar(displayedDate);
+if (!testDate) {
+  scheduleDateCheck();
+  document.addEventListener("visibilitychange", checkDate);
+}

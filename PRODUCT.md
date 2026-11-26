@@ -16,7 +16,7 @@ Ein persönlicher Kalender für die Freundin des Autors. Der Autor pflegt die 24
 
 ## Product Purpose
 
-Zwischen dem 1. und 24. Dezember 2026 wird täglich ein Türchen im Raster freigeschaltet. Dahinter steht eine persönliche Nachricht mit optionalem Foto. Eine Rubbelfläche macht das Öffnen zur kleinen täglichen Handlung.
+Zwischen dem 1. und 24. Dezember 2026 wird täglich um 8 Uhr Berliner Zeit ein Türchen im Raster freigeschaltet. Dahinter steht eine persönliche Nachricht mit optionalem Foto. Eine Rubbelfläche macht das Öffnen zur kleinen täglichen Handlung.
 
 ## Constraints
 

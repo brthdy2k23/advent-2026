@@ -1,6 +1,5 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-import { readFile } from "node:fs/promises";
 
 const door = (page, day) => page.getByRole("button", { name: new RegExp(`^${day}(?: Heute)?$`) });
 const rubSurface = (page) => page.getByRole("button", { name: "Rubbelfläche" });
@@ -24,7 +23,7 @@ test("loads from a GitHub Pages-style subpath with its local assets", async ({ p
   await page.goto("./");
   await expect(page.getByRole("listitem")).toHaveCount(24);
   await expect(door(page, 1)).toBeDisabled();
-  await expect(page.getByText("Das erste Türchen öffnet am 1. Dezember.")).toBeVisible();
+  await expect(page.getByText("Das erste Türchen öffnet am 1. Dezember um 8 Uhr.")).toBeVisible();
   for (const file of ["styles.css", "calendar-data.js", "assets/tannenzweig.webp", "assets/fonts/instrument-serif.woff2"]) {
     expect((await request.get(file)).ok()).toBe(true);
   }
@@ -53,13 +52,13 @@ test("keeps future days locked and saves a door opened by real mouse movement", 
     if (!(await scratch.isVisible())) break;
   }
   await page.mouse.up();
-  await expect(page.getByRole("heading", { name: "Der 6. Dezember" })).toBeVisible();
+  await expect(page.getByText("6. Dezember 2026", { exact: true })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(door(page, 6)).toBeFocused();
 
   await page.reload();
   await door(page, 6).click();
-  await expect(page.getByRole("heading", { name: "Der 6. Dezember" })).toBeVisible();
+  await expect(page.getByText("6. Dezember 2026", { exact: true })).toBeVisible();
 });
 
 test("rubs the surface in steps by keyboard and returns focus", async ({ page }) => {
@@ -72,7 +71,7 @@ test("rubs the surface in steps by keyboard and returns focus", async ({ page })
   await page.keyboard.press("Space");
   await expect(rubSurface(page)).toBeVisible();
   await rubWithKeyboard(page);
-  await expect(page.getByRole("heading", { name: "Der 1. Dezember" })).toBeFocused();
+  await expect(page.locator("#letter-title")).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(door(page, 1)).toBeFocused();
 });
@@ -81,15 +80,17 @@ test("uses a real Berlin date independent of the visitor's browser timezone", as
   await page.clock.setFixedTime(new Date("2026-11-30T23:02:00Z"));
   await page.goto("./");
   await expect(door(page, 1)).toHaveAttribute("aria-current", "date");
+  await expect(door(page, 1)).toBeDisabled();
   await expect(door(page, 2)).toBeDisabled();
 });
 
 test("renders optional photos and falls back when an image fails", async ({ page }) => {
-  const source = await readFile(new URL("../calendar-data.js", import.meta.url), "utf8");
   await page.route("**/calendar-data.js", async (route) => {
     await route.fulfill({
       contentType: "text/javascript",
-      body: `${source}
+      body: `export const doors = Array.from({ length: 24 }, (_, index) => ({
+          day: index + 1, title: "", text: "", image: "", alt: "",
+        }));
         Object.assign(doors[0], { title: "Ein Foto", text: "Erster Absatz.\\n\\nZweiter Absatz.",
           image: "assets/tannenzweig.webp", alt: "Ein Tannenzweig" });
         Object.assign(doors[1], { image: "assets/fotos/fehlt.webp", alt: "Fehlend" });`,
@@ -141,7 +142,7 @@ test.describe("touch and mobile layout", () => {
       if (!(await scratch.isVisible())) break;
     }
     await client.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
-    await expect(page.getByRole("heading", { name: "Der 12. Dezember" })).toBeVisible();
+    await expect(page.getByText("12. Dezember 2026", { exact: true })).toBeVisible();
   });
 });
 
@@ -152,7 +153,34 @@ test("switches today's highlight when Berlin reaches midnight with the page open
   await expect(door(page, 7)).toBeDisabled();
   await page.clock.fastForward(16000);
   await expect(door(page, 7)).toHaveAttribute("aria-current", "date");
+  await expect(door(page, 7)).toBeDisabled();
+  await expect(door(page, 6)).toBeEnabled();
+});
+
+test("unlocks the highlighted door at 08:00 Berlin time with the page open", async ({ page }) => {
+  await page.clock.install({ time: new Date("2026-12-07T06:59:55Z") });
+  await page.goto("./");
+  await expect(door(page, 7)).toHaveAttribute("aria-current", "date");
+  await expect(door(page, 7)).toBeDisabled();
+  await page.clock.fastForward(6000);
   await expect(door(page, 7)).toBeEnabled();
+  await expect(door(page, 8)).toBeDisabled();
+});
+
+test("the local test link unlocks every door and stores openings separately", async ({ page }) => {
+  await page.clock.setFixedTime(new Date("2026-11-26T12:00:00Z"));
+  await page.goto("?test=6");
+  await expect(page.getByRole("list").locator("button:enabled")).toHaveCount(24);
+  await expect(door(page, 6)).toHaveAttribute("aria-current", "date");
+  await expect(page.getByText(/Vorschau|Testmodus/)).toHaveCount(0);
+  await door(page, 24).click();
+  await rubWithKeyboard(page);
+  await expect(page.getByText("24. Dezember 2026", { exact: true })).toBeVisible();
+
+  await page.clock.setFixedTime(new Date("2026-12-24T07:00:00Z"));
+  await page.goto("./");
+  await door(page, 24).click();
+  await expect(rubSurface(page)).toBeVisible();
 });
 
 test("fits the entire rub surface into a shallow landscape dialog", async ({ page }) => {
