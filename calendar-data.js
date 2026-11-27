@@ -100,8 +100,8 @@ export const doors = [
     },
     {
         day: 14,
-        title: 'Digga...',
-        text: 'hatte ich ein Glück dich kennenzulernen - ich genieße es jede Sekunde und kann mein Glück immer noch nicht fassen. Auch wenn ein `Digga` fast gefährlich geworden wäre ;)',
+        title: 'Bro hatte...',
+        text: 'ich ein Glück dich kennenzulernen - ich genieße es jede Sekunde und kann mein Glück immer noch nicht fassen. Auch wenn ein `Bro` fast gefährlich geworden wäre ;)',
         image: '',
         alt: '',
     },
